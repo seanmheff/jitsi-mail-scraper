@@ -15,7 +15,7 @@ defmodule JitsiScraper.Mixfile do
   # Type "mix help compile.app" for more information
   def application do
     # Specify extra applications you'll use from Erlang/Elixir
-    [extra_applications: [:logger, :httpoison]]
+    [extra_applications: [:logger, :httpoison, :timex]]
   end
 
   # Dependencies can be Hex packages:
@@ -30,7 +30,8 @@ defmodule JitsiScraper.Mixfile do
   defp deps do
     [
       {:httpoison, "~> 0.10.0"},
-      {:floki, "~> 0.12.0"}
+      {:floki, "~> 0.12.0"},
+      {:timex, "~> 3.0"}
     ]
   end
 end
