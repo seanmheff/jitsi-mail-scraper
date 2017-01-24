@@ -1,18 +1,21 @@
 defmodule JitsiScraper do
   use Timex
 
-  @url "http://lists.jitsi.org/pipermail/users/"
+  @urls %{
+    :dev => "http://lists.jitsi.org/pipermail/dev/",
+    :users => "http://lists.jitsi.org/pipermail/users/"
+  }
   @regex ~r/From (.*) at (.*)  (.*)\nFrom: (.*) at (.*) \(.*\)\nDate.*\n(Subject.*?\n(.*\n)*?)?(In-Reply-To:.*?\n)?(References:.*?\n(.*\n)*?)?Message-ID:.*\n\n/
 
-  def perform do
-    scrape() |> parse()
+  def perform(list) do
+    scrape(list) |> parse()
   end
 
-  def scrape do
-    HTTPoison.get!(@url).body
+  def scrape(list) do
+    HTTPoison.get!(@urls[list]).body
     |> Floki.attribute("tr a", "href")
     |> Enum.filter(fn(url) -> String.match?(url, ~r/2017-Jan.*?.txt.gz/) end)
-    |> Enum.map(fn(path) -> HTTPoison.get!(@url <> path).body end)
+    |> Enum.map(fn(path) -> HTTPoison.get!(@urls[list] <> path).body end)
     |> Enum.map(fn(archive) -> :zlib.gunzip(archive) end)
   end
 
