@@ -11,7 +11,7 @@ defmodule JitsiScraper do
   def scrape do
     HTTPoison.get!(@url).body
     |> Floki.attribute("tr a", "href")
-    |> Enum.filter(fn(url) -> String.match?(url, ~r/2016-Nov.*?.txt.gz/) end)
+    |> Enum.filter(fn(url) -> String.match?(url, ~r/2017-Jan.*?.txt.gz/) end)
     |> Enum.map(fn(path) -> HTTPoison.get!(@url <> path).body end)
     |> Enum.map(fn(archive) -> :zlib.gunzip(archive) end)
   end
@@ -34,15 +34,16 @@ defmodule JitsiScraper do
     |> Enum.reduce(%{}, fn(header, acc) -> reduce_message(header, body, acc) end)
   end
 
-  defp reduce_header_item(item, acc) do
-    if String.starts_with? item, ["\t", " "] do # if a line starts with a " " it belongs to the previous header
-      List.replace_at(acc, -1, List.last(acc) <> item)
+  def reduce_header_item(item, headers) do
+    # if a line starts with whitespace, it belongs to the previous header
+    if String.starts_with? item, ["\t", " "] do
+      List.replace_at(headers, -1, List.last(headers) <> item)
     else
-      List.insert_at(acc, -1, item)
+      List.insert_at(headers, -1, item)
     end
   end
 
-  defp reduce_message([ key, value|_ ], body, acc) do
+  def reduce_message([ key, value|_ ], body, acc) do
     acc = case key do
       "From" -> acc
         |> Map.put(:name, parse_name(value))
@@ -57,24 +58,28 @@ defmodule JitsiScraper do
     Map.put(acc, :body, body)
   end
 
-  defp parse_name(name) do
-    Regex.named_captures(~r/.*\((?<name>.*?)\)/, name)["name"]
-  end
-
-  defp parse_email(email) do
-    matches = Regex.named_captures(~r/ (?<username>.*) at (?<domain>.*?) .*/, email)
-    matches["username"] <> "@" <> matches["domain"]
-  end
-
-  defp parse_date(date) do
-    if Regex.match?(~r/^ \w{3}, \d+ \w{3} \d{4} \d{2}:\d{2}:\d{2} [+-]\d{4}$/, date) do
-      Timex.parse!(date, " %a, %e %b %Y %H:%M:%S %z", :strftime)
-    else
-      Timex.parse!(date, " %a, %e %b %Y %H:%M:%S %z (%Z)", :strftime)
+  def parse_name(name) do
+    case Regex.named_captures(~r/.*\((?<name>.*?)\)/, name) do
+      %{ "name" => name } -> name
+      _ -> nil
     end
   end
 
-  defp parse_references(references) do
+  def parse_email(email) do
+    case Regex.named_captures(~r/ (?<username>.*) at (?<domain>.*?) .*/, email) do
+      %{ "username" => username, "domain" => domain } -> username <> "@" <> domain
+      _ -> nil
+    end
+  end
+
+  def parse_date(date) do
+    case Regex.run(~r/^ (\w{3}, \d+ \w{3} \d{4} \d{2}:\d{2}:\d{2} [+-]\d{4})/, date) do
+      [ _, match|_ ] -> Timex.parse!(match, "%a, %e %b %Y %H:%M:%S %z", :strftime)
+      nil -> nil
+    end
+  end
+
+  def parse_references(references) do
     String.split(references, " ", trim: true)
   end
 end

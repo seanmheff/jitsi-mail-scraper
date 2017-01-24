@@ -2,35 +2,60 @@ defmodule JitsiScraperTest do
   use ExUnit.Case
   doctest JitsiScraper
 
-  basic = File.read!("./test/fixtures/basic.txt")
+  @one_reference File.read!("./test/fixtures/one_reference.txt")
+  @multiple_references File.read!("./test/fixtures/multiple_references.txt")
 
-  describe "JitsiScraper.parser_header/1" do
-    test "it disgards the first 'From' header" do
-      response = JitsiScraper.parser_header basic
+  describe "JitsiScraper.parse_name/1" do
+    test "it returns nil when it cant parse the data" do
+      email = JitsiScraper.parse_name("sdfsd")
+      assert email == nil
     end
 
-    test "it parses the second 'From' header" do
+    test "can return a name address" do
+      email = JitsiScraper.parse_name(" mathieu at clabaut.net (Mathieu Clabaut)")
+      assert email == "Mathieu Clabaut"
+    end
+  end
+
+  describe "JitsiScraper.parse_email/1" do
+    test "it returns nil when it cant parse the data" do
+      email = JitsiScraper.parse_email("sdfsd")
+      assert email == nil
     end
 
-    test "it parses the 'Date' header" do
+    test "can return an email address" do
+      email = JitsiScraper.parse_email(" mathieu at clabaut.net (Mathieu Clabaut)")
+      assert email == "mathieu@clabaut.net"
+    end
+  end
+
+  describe "JitsiScraper.parse_date/1" do
+    test "it returns nil when it cant parse the date" do
+      date_obj = JitsiScraper.parse_date("bad date")
+      assert date_obj == nil
     end
 
-    test "it parses the 'Subject' header" do
+    test "it can return a DateTime object" do
+      date_obj = JitsiScraper.parse_date(" Thu, 01 Dec 2016 09:23:31 +0100")
+      assert date_obj.day == 1
+      assert date_obj.month == 12
+      assert date_obj.year == 2016
+      assert date_obj.hour == 9
+      assert date_obj.minute == 23
+      assert date_obj.second == 31
+      assert date_obj.time_zone == "Etc/GMT-1"
+    end
+  end
+
+  describe "JitsiScraper.parse_references/1" do
+    test "it can handle one reference" do
+      references = JitsiScraper.parse_references(@one_reference)
+      assert length(references) == 1
     end
 
-    test "it parses the 'Subject' header when it spans multiple lines" do
-    end
-
-    test "it can parse the optional 'In-Reply-To' header" do
-    end
-
-    test "it can parse the optional 'References' header" do
-    end
-
-    test "it can parse the optional 'References' header when it spans multiple lines" do
-    end
-
-    test "it parses the 'Message-ID' header" do
+    test "it can handle multiple references" do
+      references = JitsiScraper.parse_references(@multiple_references)
+      assert length(references) == 4
     end
   end
 end
