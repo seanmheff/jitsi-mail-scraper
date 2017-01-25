@@ -2,6 +2,7 @@ defmodule JitsiScraperTest do
   use ExUnit.Case
   doctest JitsiScraper
 
+  @subject File.read!("./test/fixtures/subject.txt")
   @one_reference File.read!("./test/fixtures/one_reference.txt")
   @multiple_references File.read!("./test/fixtures/multiple_references.txt")
 
@@ -44,6 +45,18 @@ defmodule JitsiScraperTest do
       assert date_obj.minute == 23
       assert date_obj.second == 31
       assert date_obj.time_zone == "Etc/GMT-1"
+    end
+  end
+
+  describe "JitsiScraper.parse_subject/1" do
+    test "it removes the subject prefix" do
+      subject = JitsiScraper.parse_subject(@subject)
+      assert !String.starts_with? subject, "[jitsi-users]"
+    end
+
+    test "it removes all tab characters" do
+      subject = JitsiScraper.parse_subject(@subject)
+      assert !String.contains? subject, "\t"
     end
   end
 

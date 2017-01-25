@@ -58,7 +58,7 @@ defmodule JitsiScraper do
         |> Map.put(:name, parse_name(value))
         |> Map.put(:from, parse_email(value))
       "Date" -> Map.put(acc, :date, parse_date(value))
-      "Subject" -> Map.put(acc, :subject, String.trim(value))
+      "Subject" -> Map.put(acc, :subject, parse_subject(value))
       "In-Reply-To" -> Map.put(acc, :in_reply_to, String.trim(value))
       "References" -> Map.put(acc, :references, parse_references(value))
       "Message-ID" -> Map.put(acc, :message_id, String.trim(value))
@@ -86,6 +86,14 @@ defmodule JitsiScraper do
       [ _, match|_ ] -> Timex.parse!(match, "%a, %e %b %Y %H:%M:%S %z", :strftime)
       nil -> nil
     end
+  end
+
+  def parse_subject(subject) do
+    subject
+    |> String.trim
+    |> String.replace("\t", " ")
+    |> String.split(" ", parts: 2)
+    |> List.last
   end
 
   def parse_references(references) do
