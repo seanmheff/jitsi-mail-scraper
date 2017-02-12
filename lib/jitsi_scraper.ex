@@ -1,7 +1,7 @@
 defmodule JitsiScraper do
   use Timex
 
-  @regex ~r/From (.*) at (.*)  (.*)\nFrom: (.*) at (.*) \(.*\)\nDate.*\n(Subject.*?\n(.*\n)*?)?(In-Reply-To:.*?\n)?(References:.*?\n(.*\n)*?)?Message-ID:.*\n\n/
+  @regex ~r/From (.*)\nFrom: (.*)\nDate.*\n(Subject.*?\n(.*\n)*?)?(In-Reply-To:.*?\n)?(References:.*?\n(.*\n)*?)?Message-ID:.*\n\n/
   @urls %{
     :dev => "http://lists.jitsi.org/pipermail/dev/",
     :users => "http://lists.jitsi.org/pipermail/users/"
